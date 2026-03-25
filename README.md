@@ -4,6 +4,7 @@
 
 ![PDV Básico | Oficina Prepara LEM](https://www.jorgesouza.com.br/files/pdv.jpg)
 
+[PDV Básico Online | Oficina Prepara LEM](https://www.jorgesouza.com.br/prepara)
 
 ### Instale o SDK do .NET
 
