@@ -71,20 +71,8 @@ dotnet new --list
 
 > Seu instrutor deve lhe explicar os principais templates, para que servem e como usá-los.
 
-mkdir dia_1
-cd dia_1
-dotnet new wpf -n client
-cd client
-:: O projeto foi criado com sucesso. Vamos compilar e executar:
-dotnet run
-:: limpa a tela do console
-cls
-:: Após encerra limpe o build:
-dotnet clean
-:: Agora vamos configurar o Native AOT:
-dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
-:: Em seguida limpe
-dotnet clean
-:: Vamos criar o servidor:
-cd ..
-dotnet new web -n server
+### Iniciando projeto
+
+```bash
+dotnet new web
+```
