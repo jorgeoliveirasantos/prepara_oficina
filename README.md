@@ -18,9 +18,36 @@ Ao final da instalação verifique se tudo ocorreu como esperado, digite o coman
 dotnet --version
 ````
 
-### Instale o Visual Studio
+### Instale o Visual Studio Code
 
-Baixe o Github Desktop e clone o repositório da aula indo em: File --> Clone repository --> URL
+Navegue até: https://code.visualstudio.com/download
+
+---
+
+## GitHub
+
+### Criar conta
+
+1. Acesse: https://github.com/signup
+
+2. Acesse com a conta do Google ou crie uma conta nova.
+
+### Instale o GitHub Desktop
+
+1. Navegue até: https://desktop.github.com/download/
+
+2. Após a instalação, abra a aplicação, vá em File --> Options --> Accounts, e faça login com a conta do GitHub.
+
+### Clone o repositório da aula
+
+1. Navegue até: https://github.com/jorgeoliveirasantos/prepara_oficina
+
+2. Clique em Fork.
+
+
+
+
+indo em: File --> Clone repository --> URL
 
 Cole a URL a seguir:
 
