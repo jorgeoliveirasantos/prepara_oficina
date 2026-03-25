@@ -1,0 +1,11 @@
+Implementações:
+1. Inteligência artificial: Para aprimoramento dos interceptadores, melhorando posicionamento, velocidade, detecção de rota das ameaças, aumentando a taxa de acerto e a eficiência, diminuindo a quantidade de munição desperdiçada, quantidade de interceptadores ativos. Deve elevar a faixa de alcance. Ativar e desativar interceptadores para equilibrar acertos/eficiência.
+2. Inteligência artificial: Para aprimoramento das ameaças alterando a velocidade, rotas e ponto de partida, e melhorando a eficiência, diminuindo a quantidade de ameaças mortas.
+3. Inteligência artificial: Para cálculo das métricas.
+
+Métricas:
+1. Faixa de alcance: Uma linha que define a altura em que 90% das ameaças não são mais interceptadas.
+2. Perdas: Cálculo da quantidade de munição perdida, ou seja que chega à borda da tela sem acertar o alvo.
+3. Eficiência: Quantidade de interceptadores ativos e munição disparada.
+3. Quantidade de ameaças na tela, que acertaram o alvo e que foram interceptadas.
+4. Ponto de equilíbrio: Quantidade de interceptadores ativos para manter a faixa de alcance acima da metade do canvas.

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Semáforo Inteligente - Jorge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #00d9ff;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .stat-card .unit {
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .traffic-lights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .light-group {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .light-group h3 {
+            margin-bottom: 20px;
+            color: #00d9ff;
+        }
+
+        .traffic-light {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .light {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #444;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .light.red { background: #ff0000; box-shadow: 0 0 30px #ff0000; }
+        .light.yellow { background: #ffff00; box-shadow: 0 0 30px #ffff00; }
+        .light.green { background: #00ff00; box-shadow: 0 0 30px #00ff00; }
+        .light.off { background: #444; box-shadow: none; }
+
+        .pedestrian-light {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .ped-light {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            background: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .ped-light.walk { background: #00ff00; box-shadow: 0 0 20px #00ff00; }
+        .ped-light.stop { background: #ff0000; box-shadow: 0 0 20px #ff0000; }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: #fff;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 184, 148, 0.5);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #d63031, #e17055);
+            color: #fff;
+        }
+
+        .btn-stop:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(214, 48, 49, 0.5);
+        }
+
+        .btn-pedestrian {
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+            color: #fff;
+        }
+
+        .btn-pedestrian:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(9, 132, 227, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #00d9ff;
+        }
+
+        .flow-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .flow-bar {
+            width: 20px;
+            height: 10px;
+            background: #444;
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+
+        .flow-bar.active {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stat-card .value {
+                font-size: 2rem;
+            }
+
+            .traffic-light {
+                transform: scale(0.9);
+            }
+        }
+
+        .running .status-message {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚦 Semáforo Inteligente</h1>
+            <p>Projeto Jorge - Simulação de Tráfego</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="stat-card">
+                <h3>⏱️ Tempo Decorrido</h3>
+                <div class="value" id="timer">0</div>
+                <div class="unit">segundos</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>🔄 Fase Atual</h3>
+                <div class="value" id="currentPhase">-</div>
+                <div class="unit">estado</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>🚗 Fluxo Norte</h3>
+                <div class="value" id="northFlow">0</div>
+                <div class="unit">veículos</div>
+                <div class="flow-indicator" id="northFlowIndicator">
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>🚗 Fluxo Leste</h3>
+                <div class="value" id="eastFlow">0</div>
+                <div class="unit">veículos</div>
+                <div class="flow-indicator" id="eastFlowIndicator">
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                    <div class="flow-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="traffic-lights">
+            <div class="light-group">
+                <h3>🚦 Norte/Sul</h3>
+                <div class="traffic-light">
+                    <div class="light off" id="ns-red"></div>
+                    <div class="light off" id="ns-yellow"></div>
+                    <div class="light off" id="ns-green"></div>
+                </div>
+            </div>
+
+            <div class="light-group">
+                <h3>🚦 Leste/Oeste</h3>
+                <div class="traffic-light">
+                    <div class="light off" id="ew-red"></div>
+                    <div class="light off" id="ew-yellow"></div>
+                    <div class="light off" id="ew-green"></div>
+                </div>
+            </div>
+
+            <div class="light-group">
+                <h3>🚶 Pedestres N/S</h3>
+                <div class="pedestrian-light">
+                    <div class="ped-light stop" id="ped-ns-stop">🛑</div>
+                    <div class="ped-light" id="ped-ns-walk">🚶</div>
+                </div>
+            </div>
+
+            <div class="light-group">
+                <h3>🚶 Pedestres L/O</h3>
+                <div class="pedestrian-light">
+                    <div class="ped-light stop" id="ped-ew-stop">🛑</div>
+                    <div class="ped-light" id="ped-ew-walk">🚶</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-start" id="btnStart" onclick="startSimulation()">
+                ▶ Iniciar
+            </button>
+            <button class="btn btn-stop" id="btnStop" onclick="stopSimulation()" disabled>
+                ⏹ Parar
+            </button>
+            <button class="btn btn-pedestrian" id="btnPedestrian" onclick="requestPedestrian()" disabled>
+                🚶 Pedestre
+            </button>
+        </div>
+
+        <div class="status-message" id="statusMessage">
+            > Sistema pronto. Clique em "Iniciar" para começar a simulação.
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let timer = 0;
+        let currentPhase = 0;
+        let timerInterval = null;
+        let pedestrianRequest = false;
+
+        const phases = [
+            { name: 'N/S Verde', ns: 'green', ew: 'red', pedNS: 'stop', pedEW: 'stop', duration: 5000 },
+            { name: 'N/S Amarelo', ns: 'yellow', ew: 'red', pedNS: 'stop', pedEW: 'stop', duration: 2000 },
+            { name: 'L/O Verde', ns: 'red', ew: 'green', pedNS: 'stop', pedEW: 'stop', duration: 5000 },
+            { name: 'L/O Amarelo', ns: 'red', ew: 'yellow', pedNS: 'stop', pedEW: 'stop', duration: 2000 },
+            { name: 'Pedestres', ns: 'red', ew: 'red', pedNS: 'walk', pedEW: 'walk', duration: 3000 }
+        ];
+
+        function updateLights(phase) {
+            // Reset all lights
+            document.querySelectorAll('.light').forEach(light => {
+                light.className = 'light off';
+            });
+            document.querySelectorAll('.ped-light').forEach(light => {
+                if (light.id.includes('walk')) {
+                    light.className = 'ped-light';
+                }
+            });
+
+            // Set NS lights
+            document.getElementById(`ns-${phase.ns}`).classList.add(phase.ns);
+
+            // Set EW lights
+            document.getElementById(`ew-${phase.ew}`).classList.add(phase.ew);
+
+            // Set pedestrian lights
+            if (phase.pedNS === 'walk') {
+                document.getElementById('ped-ns-walk').classList.add('walk');
+                document.getElementById('ped-ns-stop').classList.remove('stop');
+            } else {
+                document.getElementById('ped-ns-stop').classList.add('stop');
+                document.getElementById('ped-ns-walk').classList.remove('walk');
+            }
+
+            if (phase.pedEW === 'walk') {
+                document.getElementById('ped-ew-walk').classList.add('walk');
+                document.getElementById('ped-ew-stop').classList.remove('stop');
+            } else {
+                document.getElementById('ped-ew-stop').classList.add('stop');
+                document.getElementById('ped-ew-walk').classList.remove('walk');
+            }
+
+            document.getElementById('currentPhase').textContent = phase.name;
+        }
+
+        function updateFlow() {
+            const northFlow = Math.floor(Math.random() * 100);
+            const eastFlow = Math.floor(Math.random() * 100);
+
+            document.getElementById('northFlow').textContent = northFlow;
+            document.getElementById('eastFlow').textContent = eastFlow;
+
+            // Update flow indicators
+            const northBars = document.querySelectorAll('#northFlowIndicator .flow-bar');
+            const eastBars = document.querySelectorAll('#eastFlowIndicator .flow-bar');
+
+            northBars.forEach((bar, index) => {
+                bar.classList.toggle('active', index < Math.floor(northFlow / 20));
+            });
+
+            eastBars.forEach((bar, index) => {
+                bar.classList.toggle('active', index < Math.floor(eastFlow / 20));
+            });
+        }
+
+        function startSimulation() {
+            if (isRunning) return;
+
+            isRunning = true;
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('btnPedestrian').disabled = false;
+            document.getElementById('statusMessage').textContent = '> Simulação em andamento...';
+            document.body.classList.add('running');
+
+            timerInterval = setInterval(() => {
+                timer++;
+                document.getElementById('timer').textContent = timer;
+
+                updateFlow();
+
+                if (pedestrianRequest && currentPhase < 4) {
+                    currentPhase = 4;
+                    pedestrianRequest = false;
+                    document.getElementById('statusMessage').textContent = '> Solicitação de pedestre atendida!';
+                }
+
+                const phase = phases[currentPhase];
+                updateLights(phase);
+
+                setTimeout(() => {
+                    if (isRunning) {
+                        currentPhase = (currentPhase + 1) % phases.length;
+                    }
+                }, phase.duration);
+
+            }, 1000);
+        }
+
+        function stopSimulation() {
+            if (!isRunning) return;
+
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+            document.getElementById('btnPedestrian').disabled = true;
+            document.getElementById('statusMessage').textContent = '> Simulação pausada. Clique em "Iniciar" para continuar.';
+            document.body.classList.remove('running');
+
+            // Reset lights
+            document.querySelectorAll('.light').forEach(light => {
+                light.className = 'light off';
+            });
+            document.querySelectorAll('.ped-light').forEach(light => {
+                if (light.id.includes('stop')) {
+                    light.classList.add('stop');
+                } else {
+                    light.classList.remove('walk');
+                }
+            });
+        }
+
+        function requestPedestrian() {
+            if (!isRunning) return;
+
+            pedestrianRequest = true;
+            document.getElementById('statusMessage').textContent = '> Solicitação de pedestre registrada!';
+
+            setTimeout(() => {
+                pedestrianRequest = false;
+            }, 10000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLights(phases[0]);
+        });
+    </script>
+</body>
+</html>

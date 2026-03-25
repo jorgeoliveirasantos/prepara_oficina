@@ -1,0 +1,71 @@
+[
+  {
+    "id": "PAC-001",
+    "paciente": "João Silva",
+    "idade": 45,
+    "celulas": [
+      {
+        "tipo": "A",
+        "tamanho": 12,
+        "borda": "regular",
+        "nucleo": "unico"
+      },
+      {
+        "tipo": "B",
+        "tamanho": 18,
+        "borda": "irregular",
+        "nucleo": "multiplo"
+      }
+    ]
+  },
+  {
+    "id": "PAC-002",
+    "paciente": "Maria Santos",
+    "idade": 32,
+    "celulas": [
+      {
+        "tipo": "A",
+        "tamanho": 8,
+        "borda": "regular",
+        "nucleo": "unico"
+      },
+      {
+        "tipo": "A",
+        "tamanho": 9,
+        "borda": "regular",
+        "nucleo": "unico"
+      }
+    ]
+  },
+  {
+    "id": "PAC-003",
+    "paciente": "Carlos Oliveira",
+    "idade": 60,
+    "celulas": [
+      {
+        "tipo": "C",
+        "tamanho": 25,
+        "borda": "irregular",
+        "nucleo": "multiplo"
+      },
+      {
+        "tipo": "B",
+        "tamanho": 22,
+        "borda": "irregular",
+        "nucleo": "multiplo"
+      },
+      {
+        "tipo": "A",
+        "tamanho": 10,
+        "borda": "regular",
+        "nucleo": "unico"
+      }
+    ]
+  },
+  {
+    "id": "PAC-004",
+    "paciente": "Dados Corrompidos",
+    "idade": -5,
+    "celulas": []
+  }
+]

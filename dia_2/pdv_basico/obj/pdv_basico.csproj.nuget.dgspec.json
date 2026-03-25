@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "restore": {
+    "A:\\ESTUDIO\\GitHub\\prepara_oficina\\dia_1\\pdv_basico\\pdv_basico.csproj": {}
+  },
+  "projects": {
+    "A:\\ESTUDIO\\GitHub\\prepara_oficina\\dia_1\\pdv_basico\\pdv_basico.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "A:\\ESTUDIO\\GitHub\\prepara_oficina\\dia_1\\pdv_basico\\pdv_basico.csproj",
+        "projectName": "pdv_basico",
+        "projectPath": "A:\\ESTUDIO\\GitHub\\prepara_oficina\\dia_1\\pdv_basico\\pdv_basico.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "A:\\ESTUDIO\\GitHub\\prepara_oficina\\dia_1\\pdv_basico\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
