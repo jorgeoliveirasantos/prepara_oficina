@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defesa Antiaérea - Projeto Avançado</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            color: #eee;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            border: 2px solid #0f3460;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+            cursor: crosshair;
+        }
+
+        #ui-panel {
+            width: 800px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-top: none;
+            box-sizing: border-box;
+        }
+
+        .stat {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .stat span {
+            color: #00fff5;
+        }
+
+        #instructions {
+            margin-top: 15px;
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui-panel">
+            <div class="stat">PONTOS: <span id="scoreDisplay">0</span></div>
+            <div class="stat">VIDAS: <span id="livesDisplay">10</span></div>
+            <div class="stat">INIMIGOS: <span id="enemiesDisplay">0</span></div>
+        </div>
+    </div>
+
+    <div id="instructions">
+        <p>🖱️ <strong>CLIQUE</strong> no canvas para posicionar lançadores | 
+           🚀 <strong>DEFESA</strong> automática ativa | 
+           💥 <strong>INTERCEPTE</strong> os mísseis inimigos</p>
+    </div>
+
+    <script>
+    // =============================================================================
+    // 1. UTILITÁRIOS MATEMÁTICOS (Vetores e Física)
+    // =============================================================================
+    
+    const MathUtils = {
+        // Calcula distância entre dois pontos (Teorema de Pitágoras)
+        distancia: (x1, y1, x2, y2) => {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        },
+
+        // Calcula ângulo entre dois pontos em radianos
+        angulo: (x1, y1, x2, y2) => {
+            return Math.atan2(y2 - y1, x2 - x1);
+        },
+
+        // Interpolação linear para movimento suave
+        lerp: (start, end, t) => {
+            return start + (end - start) * t;
+        },
+
+        // Gera número aleatório entre min e max
+        random: (min, max) => {
+            return Math.random() * (max - min) + min;
+        }
+    };
+
+    // =============================================================================
+    // 2. CLASSES BASE (Entidades do Jogo)
+    // =============================================================================
+
+    class Entidade {
+        constructor(x, y, cor) {
+            this.x = x;
+            this.y = y;
+            this.cor = cor;
+            this.ativa = true;
+            this.raio = 5;
+        }
+
+        atualizar(deltaTime) {
+            // Método abstrato - deve ser implementado pelas subclasses
+        }
+
+        renderizar(ctx) {
+            // Método abstrato - deve ser implementado pelas subclasses
+        }
+
+        // Detecção de colisão simples (círculo vs círculo)
+        colideCom(outraEntidade) {
+            const dist = MathUtils.distancia(this.x, this.y, outraEntidade.x, outraEntidade.y);
+            return dist < (this.raio + outraEntidade.raio);
+        }
+    }
+
+    // =============================================================================
+    // 3. MÍSSEIS (Inimigo e Defesa)
+    // =============================================================================
+
+    class MissilInimigo extends Entidade {
+        constructor(x, y, alvoX, alvoY, velocidade = 2) {
+            super(x, y, '#ff4757');
+            this.alvoX = alvoX;
+            this.alvoY = alvoY;
+            this.velocidade = velocidade;
+            this.raio = 6;
+            
+            // Calcula vetor de direção normalizado
+            const angulo = MathUtils.angulo(x, y, alvoX, alvoY);
+            this.vx = Math.cos(angulo) * this.velocidade;
+            this.vy = Math.sin(angulo) * this.velocidade;
+        }
+
+        atualizar(deltaTime) {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Remove se atingir o alvo (chão)
+            if (this.y >= this.alvoY - 10) {
+                this.ativa = false;
+                return 'impacto';
+            }
+            return null;
+        }
+
+        renderizar(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+            ctx.fillStyle = this.cor;
+            ctx.fill();
+            
+            // Rastro do míssil
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3);
+            ctx.strokeStyle = 'rgba(255, 71, 87, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    class MissilDefesa extends Entidade {
+        constructor(x, y, alvoX, alvoY, velocidade = 8) {
+            super(x, y, '#00fff5');
+            this.alvoX = alvoX;
+            this.alvoY = alvoY;
+            this.velocidade = velocidade;
+            this.raio = 4;
+
+            const angulo = MathUtils.angulo(x, y, alvoX, alvoY);
+            this.vx = Math.cos(angulo) * this.velocidade;
+            this.vy = Math.sin(angulo) * this.velocidade;
+        }
+
+        atualizar(deltaTime) {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Remove se sair da tela ou chegar perto do alvo
+            if (this.x < 0 || this.x > 800 || this.y < 0 || this.y > 600) {
+                this.ativa = false;
+            }
+            return null;
+        }
+
+        renderizar(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+            ctx.fillStyle = this.cor;
+            ctx.fill();
+
+            // Rastro brilhante
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x - this.vx * 5, this.y - this.vy * 5);
+            ctx.strokeStyle = 'rgba(0, 255, 245, 0.7)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+    }
+
+    // =============================================================================
+    // 4. LANÇADORES E EXPLOSÕES
+    // =============================================================================
+
+    class Lancador extends Entidade {
+        constructor(x, y) {
+            super(x, y, '#2ed573');
+            this.raio = 15;
+            this.tempoRecarga = 0;
+            this.recargaMaxima = 30; // frames
+        }
+
+        atualizar(deltaTime) {
+            if (this.tempoRecarga > 0) {
+                this.tempoRecarga--;
+            }
+        }
+
+        renderizar(ctx) {
+            // Base do lançador
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+            ctx.fillStyle = this.tempoRecarga > 0 ? '#555' : this.cor;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Indicador de recarga
+            if (this.tempoRecarga > 0) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.raio * (this.tempoRecarga / this.recargaMaxima), 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+            }
+        }
+
+        podeAtirar() {
+            return this.tempoRecarga === 0;
+        }
+
+        atirar(alvoX, alvoY) {
+            if (this.podeAtirar()) {
+                this.tempoRecarga = this.recargaMaxima;
+                return new MissilDefesa(this.x, this.y, alvoX, alvoY);
+            }
+            return null;
+        }
+    }
+
+    class Explosao extends Entidade {
+        constructor(x, y, cor = '#ffa502') {
+            super(x, y, cor);
+            this.raio = 5;
+            this.raioMaximo = 40;
+            this.vida = 1.0; // 100%
+            this.decrescimo = 0.05;
+        }
+
+        atualizar(deltaTime) {
+            this.raio += 2;
+            this.vida -= this.decrescimo;
+            
+            if (this.vida <= 0 || this.raio >= this.raioMaximo) {
+                this.ativa = false;
+            }
+        }
+
+        renderizar(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 165, 2, ${this.vida})`;
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.raio * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.vida})`;
+            ctx.fill();
+        }
+    }
+
+    // =============================================================================
+    // 5. CONTROLADOR DO JOGO (Game Loop e Estado)
+    // =============================================================================
+
+    class Jogo {
+        constructor(canvasId) {
+            this.canvas = document.getElementById(canvasId);
+            this.ctx = this.canvas.getContext('2d');
+            
+            // Estado do jogo
+            this.lancadores = [];
+            misseisInimigos = []; // Variável global para acesso no event listener
+            this.misseisDefesa = [];
+            this.explosoes = [];
+            
+            this.pontos = 0;
+            this.vidas = 10;
+            this.gameOver = false;
+
+            // Spawn de inimigos
+            this.timerSpawn = 0;
+            this.intervaloSpawn = 60; // frames
+
+            // Configura eventos
+            this.configurarEventos();
+            
+            // Inicia loop
+            this.ultimoTempo = 0;
+            this.loop = this.loop.bind(this);
+            requestAnimationFrame(this.loop);
+        }
+
+        configurarEventos() {
+            // Clique para criar lançador
+            this.canvas.addEventListener('click', (e) => {
+                if (this.gameOver) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Só permite lançadores na metade inferior
+                if (y > 300) {
+                    this.lancadores.push(new Lancador(x, y));
+                    this.criarExplosao(x, y, '#2ed573');
+                }
+            });
+
+            // Tecla para disparo manual (opcional)
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !this.gameOver) {
+                    this.dispararDefesaAutomatica();
+                }
+            });
+        }
+
+        criarExplosao(x, y, cor) {
+            this.explosoes.push(new Explosao(x, y, cor));
+        }
+
+        spawnarInimigo() {
+            const x = MathUtils.random(50, 750);
+            const y = 0;
+            const alvoX = MathUtils.random(0, 800);
+            const alvoY = 600;
+            
+            misseisInimigos.push(new MissilInimigo(x, y, alvoX, alvoY, MathUtils.random(1.5, 3)));
+        }
+
+        dispararDefesaAutomatica() {
+            // Cada lançador atira no inimigo mais próximo
+            this.lancadores.forEach(lancador => {
+                if (!lancador.podeAtirar()) return;
+
+                let inimigoMaisProximo = null;
+                let distanciaMinima = Infinity;
+
+                misseisInimigos.forEach(inimigo => {
+                    const dist = MathUtils.distancia(lancador.x, lancador.y, inimigo.x, inimigo.y);
+                    if (dist < distanciaMinima && dist < 400) { // Alcance máximo
+                        distanciaMinima = dist;
+                        inimigoMaisProximo = inimigo;
+                    }
+                });
+
+                if (inimigoMaisProximo) {
+                    // Predição simples: atira onde o inimigo estará
+                    const missil = lancador.atirar(inimigoMaisProximo.x, inimigoMaisProximo.y);
+                    if (missil) {
+                        this.misseisDefesa.push(missil);
+                    }
+                }
+            });
+        }
+
+        verificarColisoes() {
+            // Defesa vs Inimigo
+            this.misseisDefesa.forEach(defesa => {
+                misseisInimigos.forEach(inimigo => {
+                    if (defesa.ativa && inimigo.ativa && defesa.colideCom(inimigo)) {
+                        defesa.ativa = false;
+                        inimigo.ativa = false;
+                        this.criarExplosao(inimigo.x, inimigo.y, '#ff4757');
+                        this.pontos += 100;
+                        this.atualizarUI();
+                    }
+                });
+            });
+
+            // Inimigo vs Chão (dano)
+            misseisInimigos.forEach(inimigo => {
+                if (!inimigo.ativa && inimigo.y >= 590) {
+                    this.vidas--;
+                    this.criarExplosao(inimigo.x, inimigo.y, '#ff4757');
+                    this.atualizarUI();
+                    
+                    if (this.vidas <= 0) {
+                        this.gameOver = true;
+                    }
+                }
+            });
+        }
+
+        atualizarUI() {
+            document.getElementById('scoreDisplay').textContent = this.pontos;
+            document.getElementById('livesDisplay').textContent = this.vidas;
+            document.getElementById('enemiesDisplay').textContent = misseisInimigos.length;
+        }
+
+        limparEntidadesInativas() {
+            misseisInimigos = misseisInimigos.filter(e => e.ativa);
+            this.misseisDefesa = this.misseisDefesa.filter(e => e.ativa);
+            this.explosoes = this.explosoes.filter(e => e.ativa);
+        }
+
+        renderizar() {
+            // Limpa canvas
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // Renderiza lançadores
+            this.lancadores.forEach(l => l.renderizar(this.ctx));
+
+            // Renderiza mísseis
+            misseisInimigos.forEach(m => m.renderizar(this.ctx));
+            this.misseisDefesa.forEach(m => m.renderizar(this.ctx));
+
+            // Renderiza explosões
+            this.explosoes.forEach(e => e.renderizar(this.ctx));
+
+            // Game Over
+            if (this.gameOver) {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.ctx.fillStyle = '#ff4757';
+                this.ctx.font = 'bold 48px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2);
+                
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '24px Courier New';
+                this.ctx.fillText(`Pontuação Final: ${this.pontos}`, this.canvas.width / 2, this.canvas.height / 2 + 50);
+                this.ctx.fillText('Recarregue a página para jogar novamente', this.canvas.width / 2, this.canvas.height / 2 + 90);
+            }
+        }
+
+        loop(timestamp) {
+            const deltaTime = timestamp - this.ultimoTempo;
+            this.ultimoTempo = timestamp;
+
+            if (!this.gameOver) {
+                // Spawn de inimigos
+                this.timerSpawn++;
+                if (this.timerSpawn >= this.intervaloSpawn) {
+                    this.spawnarInimigo();
+                    this.timerSpawn = 0;
+                    // Aumenta dificuldade progressivamente
+                    if (this.intervaloSpawn > 20) {
+                        this.intervaloSpawn -= 0.1;
+                    }
+                }
+
+                // Atualiza entidades
+                this.lancadores.forEach(l => l.atualizar(deltaTime));
+                misseisInimigos.forEach(m => m.atualizar(deltaTime));
+                this.misseisDefesa.forEach(m => m.atualizar(deltaTime));
+                this.explosoes.forEach(e => e.atualizar(deltaTime));
+
+                // Disparo automático da defesa (a cada 10 frames)
+                if (this.timerSpawn % 10 === 0) {
+                    this.dispararDefesaAutomatica();
+                }
+
+                this.verificarColisoes();
+                this.limparEntidadesInativas();
+                this.atualizarUI();
+            }
+
+            this.renderizar();
+            requestAnimationFrame(this.loop);
+        }
+    }
+
+    // =============================================================================
+    // 6. INICIALIZAÇÃO
+    // =============================================================================
+
+    // Variável global necessária para o event listener de clique acessar
+    let misseisInimigos = [];
+
+    // Inicia o jogo quando a página carregar
+    window.addEventListener('load', () => {
+        const jogo = new Jogo('gameCanvas');
+    });
+
+    </script>
+</body>
+</html>
